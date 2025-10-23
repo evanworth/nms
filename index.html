@@ -4,7 +4,7 @@
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <title>NMS Period Tracker</title>
-  <link rel="manifest" href="manifest.json">
+  <link rel="manifest" href="/nms/manifest.json">
   <meta name="theme-color" content="#004080" />
   <style>
     body {
@@ -59,7 +59,6 @@
   </div>
 
   <script>
-    console.log("Script is running!");
     const schedules = {
       mw: [
         ["1", "08:10", "08:40"],
@@ -91,6 +90,14 @@
       const isMW = (day === 1 || day === 3);
       const todaySchedule = isMW ? schedules.mw : schedules.ttf;
 
+      if (day === 0 || day === 6) {
+        document.getElementById('dayType').textContent = "Weekend Schedule";
+        document.getElementById('currentPeriod').textContent = "It's the weekend — no school today!";
+        document.getElementById('timeRemaining').textContent = "";
+        document.getElementById('nextPeriod').textContent = "";
+        return;
+      }
+
       document.getElementById('dayType').textContent =
         isMW ? "Monday/Wednesday Schedule" : "Tuesday/Thursday/Friday Schedule";
 
@@ -101,4 +108,42 @@
 
       for (let i = 0; i < todaySchedule.length; i++) {
         const [p, start, end] = todaySchedule[i];
-        const [sh, sm]
+        const [sh, sm] = start.split(':').map(Number);
+        const [eh, em] = end.split(':').map(Number);
+        const startMins = sh * 60 + sm;
+        const endMins = eh * 60 + em;
+
+        if (currentTime >= startMins && currentTime < endMins) {
+          period = `Current Period: ${p}`;
+          const minsLeft = endMins - currentTime;
+          timeLeft = `${minsLeft} min left in this period.`;
+          if (i + 1 < todaySchedule.length) {
+            const [np, ns] = todaySchedule[i + 1];
+            nextPeriodText = `Next Period: ${np} starts at ${todaySchedule[i + 1][1]}`;
+          }
+          break;
+        } else if (currentTime < startMins) {
+          period = `Passing Time`;
+          const minsUntil = startMins - currentTime;
+          nextPeriodText = `Next Period: ${p} starts in ${minsUntil} min.`;
+          break;
+        }
+      }
+
+      document.getElementById('currentPeriod').textContent = period;
+      document.getElementById('timeRemaining').textContent = timeLeft;
+      document.getElementById('nextPeriod').textContent = nextPeriodText;
+    }
+
+    setInterval(updateClock, 1000);
+    updateClock();
+
+    // Register service worker for PWA
+    if ('serviceWorker' in navigator) {
+      navigator.serviceWorker.register('/nms/service-worker.js')
+        .then(() => console.log('Service worker registered successfully'))
+        .catch(err => console.log('Service worker registration failed:', err));
+    }
+  </script>
+</body>
+</html>
