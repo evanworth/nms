@@ -1,35 +1,53 @@
+
 <!DOCTYPE html>
 <html lang="en">
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>NMS Period Tracker</title>
+  <title>NMS Period Tracker v2</title>
   <link rel="manifest" href="/nms/manifest.json">
-  <meta name="theme-color" content="#004080" />
+  <meta name="theme-color" content="#003366" />
   <style>
     body {
-      font-family: Arial, sans-serif;
+      font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
       text-align: center;
-      padding: 30px;
-      background-color: #f8f9fa;
-      color: #333;
+      padding: 20px;
+      background-color: #f4f6f8;
+      color: #222;
+      margin: 0;
     }
-    h1 { color: #004080; }
+    h1 {
+      color: #003366;
+      margin-top: 10px;
+      font-size: 1.8em;
+    }
     .clock {
-      font-size: 2.5em;
+      font-size: 2.2em;
+      background: #000;
+      color: #00ff88;
+      padding: 10px 25px;
+      border-radius: 10px;
+      display: inline-block;
       margin: 20px 0;
+      font-family: 'Courier New', monospace;
     }
     .period-box {
-      display: inline-block;
       background: #e3f2fd;
       padding: 20px;
-      border-radius: 12px;
-      box-shadow: 0 2px 5px rgba(0,0,0,0.1);
-      margin-top: 20px;
+      border-radius: 15px;
+      box-shadow: 0 3px 6px rgba(0,0,0,0.15);
+      max-width: 400px;
+      margin: 0 auto;
+      transition: all 0.3s ease;
+    }
+    .period-box.active {
+      background-color: #003366;
+      color: #fff;
+      transform: scale(1.03);
     }
     .label { font-size: 1.2em; }
     .time-left { font-size: 1.1em; color: #007bff; }
-    .next-period { margin-top: 10px; font-size: 1.1em; color: #28a745; }
+    .next-period { margin-top: 8px; font-size: 1em; color: #28a745; }
     .lunch-box {
       margin-top: 25px;
       background: #fff3cd;
@@ -38,12 +56,33 @@
       display: inline-block;
       box-shadow: 0 2px 5px rgba(0,0,0,0.1);
     }
+    .schedule-box {
+      margin-top: 25px;
+      padding: 15px;
+      background: #fff;
+      border-radius: 10px;
+      max-width: 400px;
+      margin-left: auto;
+      margin-right: auto;
+      box-shadow: 0 2px 6px rgba(0,0,0,0.1);
+    }
+    footer {
+      margin-top: 30px;
+      font-size: 0.9em;
+      color: #666;
+    }
+    @media (max-width: 600px) {
+      h1 { font-size: 1.4em; }
+      .clock { font-size: 1.6em; }
+      .period-box, .schedule-box { width: 90%; }
+    }
   </style>
 </head>
 <body>
+  <img src="icon-192.png" alt="NMS Logo" width="90" style="margin-top:10px;">
   <h1>Nissitissit Middle School Period Tracker</h1>
   <div class="clock" id="clock"></div>
-  <div class="period-box">
+  <div class="period-box" id="periodBox">
     <div class="label" id="dayType"></div>
     <div class="label" id="currentPeriod"></div>
     <div class="time-left" id="timeRemaining"></div>
@@ -57,6 +96,10 @@
     <p>Grade 7: 11:54 - 12:24</p>
     <p>Grade 8: 12:26 - 12:56</p>
   </div>
+
+  <div class="schedule-box" id="fullSchedule"></div>
+
+  <footer>Patriot Pride Starts With You · Nissitissit Middle School</footer>
 
   <script>
     const schedules = {
@@ -83,21 +126,24 @@
 
     function updateClock() {
       const now = new Date();
-      document.getElementById('clock').textContent =
-        now.toLocaleTimeString([], {hour: '2-digit', minute: '2-digit', second: '2-digit'});
+      const hours = now.getHours().toString().padStart(2, '0');
+      const mins = now.getMinutes().toString().padStart(2, '0');
+      const secs = now.getSeconds().toString().padStart(2, '0');
+      document.getElementById('clock').textContent = `${hours}:${mins}:${secs}`;
 
-      const day = now.getDay(); // 1=Mon, 2=Tue, ... 5=Fri
-      const isMW = (day === 1 || day === 3);
-      const todaySchedule = isMW ? schedules.mw : schedules.ttf;
-
+      const day = now.getDay();
       if (day === 0 || day === 6) {
         document.getElementById('dayType').textContent = "Weekend Schedule";
         document.getElementById('currentPeriod').textContent = "It's the weekend — no school today!";
         document.getElementById('timeRemaining').textContent = "";
         document.getElementById('nextPeriod').textContent = "";
+        document.getElementById('periodBox').classList.remove('active');
+        document.getElementById('fullSchedule').innerHTML = "";
         return;
       }
 
+      const isMW = (day === 1 || day === 3);
+      const todaySchedule = isMW ? schedules.mw : schedules.ttf;
       document.getElementById('dayType').textContent =
         isMW ? "Monday/Wednesday Schedule" : "Tuesday/Thursday/Friday Schedule";
 
@@ -105,6 +151,7 @@
       let period = "No school right now";
       let timeLeft = "";
       let nextPeriodText = "";
+      let active = false;
 
       for (let i = 0; i < todaySchedule.length; i++) {
         const [p, start, end] = todaySchedule[i];
@@ -115,10 +162,13 @@
 
         if (currentTime >= startMins && currentTime < endMins) {
           period = `Current Period: ${p}`;
-          const minsLeft = endMins - currentTime;
-          timeLeft = `${minsLeft} min left in this period.`;
+          const secsLeft = (endMins - currentTime) * 60 - now.getSeconds();
+          const minsLeft = Math.floor(secsLeft / 60);
+          const secLeft = secsLeft % 60;
+          timeLeft = `${minsLeft}:${secLeft.toString().padStart(2,'0')} left in this period.`;
+          active = true;
           if (i + 1 < todaySchedule.length) {
-            const [np, ns] = todaySchedule[i + 1];
+            const [np] = todaySchedule[i + 1];
             nextPeriodText = `Next Period: ${np} starts at ${todaySchedule[i + 1][1]}`;
           }
           break;
@@ -130,19 +180,23 @@
         }
       }
 
+      const box = document.getElementById('periodBox');
+      box.classList.toggle('active', active);
       document.getElementById('currentPeriod').textContent = period;
       document.getElementById('timeRemaining').textContent = timeLeft;
       document.getElementById('nextPeriod').textContent = nextPeriodText;
+
+      document.getElementById('fullSchedule').innerHTML =
+        todaySchedule.map(([p, s, e]) => `<p>Period ${p}: ${s} - ${e}</p>`).join('');
     }
 
     setInterval(updateClock, 1000);
     updateClock();
 
-    // Register service worker for PWA
     if ('serviceWorker' in navigator) {
       navigator.serviceWorker.register('/nms/service-worker.js')
-        .then(() => console.log('Service worker registered successfully'))
-        .catch(err => console.log('Service worker registration failed:', err));
+        .then(() => console.log('Service worker registered'))
+        .catch(err => console.log('SW registration failed:', err));
     }
   </script>
 </body>
