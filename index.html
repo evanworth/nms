@@ -7,76 +7,95 @@
   <title>NMS Period Tracker v2</title>
   <link rel="manifest" href="/nms/manifest.json">
   <meta name="theme-color" content="#003366" />
-  <style>
-    body {
-      font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
-      text-align: center;
-      padding: 20px;
-      background-color: #f4f6f8;
-      color: #222;
-      margin: 0;
-    }
-    h1 {
-      color: #003366;
-      margin-top: 10px;
-      font-size: 1.8em;
-    }
-    .clock {
-      font-size: 2.2em;
-      background: #000;
-      color: #00ff88;
-      padding: 10px 25px;
-      border-radius: 10px;
-      display: inline-block;
-      margin: 20px 0;
-      font-family: 'Courier New', monospace;
-    }
-    .period-box {
-      background: #e3f2fd;
-      padding: 20px;
-      border-radius: 15px;
-      box-shadow: 0 3px 6px rgba(0,0,0,0.15);
-      max-width: 400px;
-      margin: 0 auto;
-      transition: all 0.3s ease;
-    }
-    .period-box.active {
-      background-color: #003366;
-      color: #fff;
-      transform: scale(1.03);
-    }
-    .label { font-size: 1.2em; }
-    .time-left { font-size: 1.1em; color: #007bff; }
-    .next-period { margin-top: 8px; font-size: 1em; color: #28a745; }
-    .lunch-box {
-      margin-top: 25px;
-      background: #fff3cd;
-      padding: 15px;
-      border-radius: 10px;
-      display: inline-block;
-      box-shadow: 0 2px 5px rgba(0,0,0,0.1);
-    }
-    .schedule-box {
-      margin-top: 25px;
-      padding: 15px;
-      background: #fff;
-      border-radius: 10px;
-      max-width: 400px;
-      margin-left: auto;
-      margin-right: auto;
-      box-shadow: 0 2px 6px rgba(0,0,0,0.1);
-    }
-    footer {
-      margin-top: 30px;
-      font-size: 0.9em;
-      color: #666;
-    }
-    @media (max-width: 600px) {
-      h1 { font-size: 1.4em; }
-      .clock { font-size: 1.6em; }
-      .period-box, .schedule-box { width: 90%; }
-    }
-  </style>
+ <style>
+  body {
+    font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+    text-align: center;
+    padding: 20px;
+    background-color: #f4f6f8;
+    color: #222;
+    margin: 0;
+  }
+  h1 {
+    color: #003366;
+    margin-top: 10px;
+    font-size: 1.8em;
+  }
+  .clock {
+    font-size: 2.2em;
+    background: #000;
+    color: #00ff88;
+    padding: 10px 25px;
+    border-radius: 10px;
+    display: inline-block;
+    margin: 20px 0;
+    font-family: 'Courier New', monospace;
+  }
+  .period-box {
+    background: #e3f2fd;
+    padding: 25px;
+    border-radius: 18px;
+    box-shadow: 0 3px 6px rgba(0,0,0,0.15);
+    max-width: 420px;
+    margin: 0 auto;
+    transition: all 0.3s ease;
+  }
+  .period-box.active {
+    background-color: #003366;
+    color: #fff;
+    transform: scale(1.05);
+    box-shadow: 0 0 25px rgba(0, 51, 102, 0.6);
+    animation: pulse 2s infinite;
+  }
+  @keyframes pulse {
+    0% { box-shadow: 0 0 15px rgba(0, 51, 102, 0.6); }
+    50% { box-shadow: 0 0 35px rgba(0, 51, 102, 0.8); }
+    100% { box-shadow: 0 0 15px rgba(0, 51, 102, 0.6); }
+  }
+  .label {
+    font-size: 1.2em;
+    margin: 10px 0;
+  }
+  #currentPeriod {
+    font-size: 2em;
+    font-weight: 800;
+    margin: 15px 0;
+    text-transform: uppercase;
+  }
+  .time-left {
+    font-size: 1.2em;
+    font-weight: 500;
+    color: #00ffcc;
+  }
+  .next-period {
+    margin-top: 8px;
+    font-size: 1.1em;
+    color: #ffd54f;
+  }
+  .lunch-box {
+    margin-top: 25px;
+    background: #fff3cd;
+    padding: 15px;
+    border-radius: 10px;
+    display: inline-block;
+    box-shadow: 0 2px 5px rgba(0,0,0,0.1);
+  }
+  .schedule-box {
+    margin-top: 25px;
+    padding: 15px;
+    background: #fff;
+    border-radius: 10px;
+    max-width: 400px;
+    margin-left: auto;
+    margin-right: auto;
+    box-shadow: 0 2px 6px rgba(0,0,0,0.1);
+  }
+  footer {
+    margin-top: 30px;
+    font-size: 0.9em;
+    color: #666;
+  }
+</style>
 </head>
 <body>
   <img src="icon-192.png" alt="NMS Logo" width="500" style="margin-top:10px;">
