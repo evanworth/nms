@@ -134,22 +134,68 @@ function getWindDirection(deg) {
   return dirs[Math.round(deg / 45) % 8];
 }
 
+function getWeatherDescription(code) {
+  const weatherCodes = {
+    0: "Clear",
+    1: "Mostly Clear",
+    2: "Partly Cloudy",
+    3: "Overcast",
+    45: "Fog",
+    48: "Rime Fog",
+    51: "Light Drizzle",
+    53: "Drizzle",
+    55: "Heavy Drizzle",
+    56: "Freezing Drizzle",
+    57: "Heavy Freezing Drizzle",
+    61: "Light Rain",
+    63: "Rain",
+    65: "Heavy Rain",
+    66: "Freezing Rain",
+    67: "Heavy Freezing Rain",
+    71: "Light Snow",
+    73: "Snow",
+    75: "Heavy Snow",
+    77: "Snow Grains",
+    80: "Rain Showers",
+    81: "Heavy Rain Showers",
+    82: "Violent Rain Showers",
+    85: "Snow Showers",
+    86: "Heavy Snow Showers",
+    95: "Thunderstorm",
+    96: "Thunderstorm With Hail",
+    99: "Severe Thunderstorm With Hail"
+  };
+
+  return weatherCodes[code] || "Current Conditions";
+}
+
 async function fetchWeather() {
   const weatherBox = document.getElementById("weatherBox");
+  const weatherUrl = new URL("https://api.open-meteo.com/v1/forecast");
+
+  weatherUrl.searchParams.set("latitude", "42.6687");
+  weatherUrl.searchParams.set("longitude", "-71.5884");
+  weatherUrl.searchParams.set("current", "temperature_2m,apparent_temperature,weather_code,wind_speed_10m,wind_direction_10m");
+  weatherUrl.searchParams.set("temperature_unit", "fahrenheit");
+  weatherUrl.searchParams.set("wind_speed_unit", "mph");
+  weatherUrl.searchParams.set("timezone", "America/New_York");
 
   try {
-    const res = await fetch("/api/weather");
+    const res = await fetch(weatherUrl.toString());
     if (!res.ok) {
       throw new Error(`Weather request failed: ${res.status}`);
     }
 
     const data = await res.json();
-    const windDir = getWindDirection(data.windDeg);
+    const current = data.current;
+    const windDir = getWindDirection(current.wind_direction_10m);
+    const conditions = getWeatherDescription(current.weather_code);
 
     weatherBox.innerHTML =
-      `Temperature: <strong>${data.temp}F</strong> (feels like ${data.feelsLike}F)<br>` +
-      `${data.conditions}<br>` +
-      `Wind: ${windDir} at ${data.windSpeed} mph`;
+      `Temperature: <strong>${Math.round(current.temperature_2m)}F</strong> ` +
+      `(feels like ${Math.round(current.apparent_temperature)}F)<br>` +
+      `${conditions}<br>` +
+      `Wind: ${windDir} at ${Math.round(current.wind_speed_10m)} mph`;
   } catch (error) {
     weatherBox.textContent = "Weather data unavailable.";
   }
@@ -157,7 +203,7 @@ async function fetchWeather() {
 
 if ("serviceWorker" in navigator) {
   window.addEventListener("load", () => {
-    navigator.serviceWorker.register("/service-worker.js");
+    navigator.serviceWorker.register("service-worker.js");
   });
 }
 

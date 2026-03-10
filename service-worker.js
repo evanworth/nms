@@ -1,12 +1,12 @@
-const CACHE_NAME = "nextblock-v4";
+const CACHE_NAME = "nextblock-v5";
 const PRECACHE_URLS = [
-  "/",
-  "/index.html",
-  "/styles.css",
-  "/app.js",
-  "/manifest.json",
-  "/icon-192.png",
-  "/icon-512.png"
+  "./",
+  "./index.html",
+  "./styles.css",
+  "./app.js",
+  "./manifest.json",
+  "./icon-192.png",
+  "./icon-512.png"
 ];
 
 self.addEventListener("install", (event) => {
@@ -37,14 +37,9 @@ self.addEventListener("fetch", (event) => {
   const reqUrl = new URL(event.request.url);
   const isSameOrigin = reqUrl.origin === self.location.origin;
 
-  if (isSameOrigin && reqUrl.pathname.startsWith("/api/weather")) {
-    event.respondWith(fetch(event.request));
-    return;
-  }
-
   if (event.request.mode === "navigate") {
     event.respondWith(
-      fetch(event.request).catch(() => caches.match("/index.html"))
+      fetch(event.request).catch(() => caches.match("./index.html"))
     );
     return;
   }
