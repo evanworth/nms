@@ -4,27 +4,13 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>NextBlock v3.3</title>
-  <link rel="manifest" href="manifest.json">
+  <title>NextBlock v3.4</title>
+  <link rel="manifest" href="manifest.json" />
   <meta name="theme-color" content="#003366" />
-  <style>
-    body {font-family:'Segoe UI',sans-serif;text-align:center;padding:20px;background:#f4f6f8;color:#222;margin:0;}
-    h1 {color:#003366;margin-top:10px;font-size:1.8em;}
-    .clock {font-size:2.2em;background:#000;color:#00ff88;padding:10px 25px;border-radius:10px;display:inline-block;margin:20px 0;font-family:'Courier New',monospace;}
-    .period-box {background:#e3f2fd;padding:20px;border-radius:15px;box-shadow:0 3px 6px rgba(0,0,0,0.15);max-width:400px;margin:0 auto;transition:all 0.3s ease;}
-    .period-box.active {background-color:#003366;color:#fff;transform:scale(1.03);box-shadow:0 0 25px rgba(0,51,102,0.6);}
-    #currentPeriod {font-size:1.8em;font-weight:bold;margin:10px 0;}
-    .time-left {font-size:1.2em;color:#007bff;}
-    .next-period {margin-top:8px;font-size:1em;color:#28a745;}
-    .lunch-weather-container {display:flex;flex-wrap:wrap;justify-content:center;gap:20px;margin-top:25px;}
-    .lunch-box,#weatherBox {background:#fff3cd;padding:15px;border-radius:10px;box-shadow:0 2px 5px rgba(0,0,0,0.1);width:280px;}
-    #weatherBox {background:#e3f2fd;font-size:1.1em;}
-    #lunchStatus {margin-top:10px;font-weight:bold;font-size:1.2em;color:#D32F2F;}
-    footer {margin-top:30px;font-size:0.9em;color:#666;}
-  </style>
+  <link rel="stylesheet" href="styles.css" />
 </head>
 <body>
-  <img src="icon-192.png" alt="NMS Logo" width="90" style="margin-top:10px;">
+  <img src="icon-192.png" alt="NMS Logo" width="90" class="logo" />
   <h1>NextBlock - Nissitissit Middle School</h1>
   <div class="clock" id="clock"></div>
 
@@ -45,21 +31,11 @@
       <p id="lunch8">Grade 8: 12:26 - 12:56</p>
     </div>
 
-    <div id="weatherBox">🌦️ Loading Pepperell weather...</div>
+    <div id="weatherBox">Loading Pepperell weather...</div>
   </div>
 
   <footer>Patriot Pride Starts With You · Nissitissit Middle School</footer>
 
-<script>
-const schedules={mw:[["1","08:10","08:40"],["2","08:40","09:30"],["3","09:30","10:20"],["4","10:20","11:10"],["5","11:10","12:00"],["6","12:00","12:50"],["7","12:50","13:40"],["8","13:40","14:25"]],ttf:[["1","08:05","09:00"],["2","09:00","09:55"],["3","09:55","10:50"],["4","10:50","11:45"],["5","11:45","12:40"],["6","12:40","13:35"],["7","13:35","14:25"]]};
-function formatTime(h,m){const ampm=h>=12?'PM':'AM';const hr=h%12||12;return `${hr}:${m.toString().padStart(2,'0')} ${ampm}`;}
-function updateClock(){const now=new Date();const currentTime=now.getHours()*60+now.getMinutes();document.getElementById('clock').textContent=now.toLocaleTimeString([], {hour:'2-digit',minute:'2-digit',second:'2-digit',hour12:true});const day=now.getDay();if(day===0||day===6){document.getElementById('dayType').textContent='Weekend Schedule';document.getElementById('currentPeriod').textContent="It's the weekend — no school today!";document.getElementById('timeRemaining').textContent='';document.getElementById('nextPeriod').textContent='';document.getElementById('lunchStatus').textContent='';document.getElementById('periodBox').classList.remove('active');return;}const isMW=(day===1||day===3);const todaySchedule=isMW?schedules.mw:schedules.ttf;document.getElementById('dayType').textContent=isMW?'Monday/Wednesday Schedule':'Tuesday/Thursday/Friday Schedule';let period='No school right now';let timeLeft='';let nextPeriodText='';let active=false;for(let i=0;i<todaySchedule.length;i++){const[p,start,end]=todaySchedule[i];const[sh,sm]=start.split(':').map(Number);const[eh,em]=end.split(':').map(Number);const startMins=sh*60+sm;const endMins=eh*60+em;if(currentTime>=startMins&&currentTime<endMins){period=`Current Period: ${p}`;const secsLeft=(endMins-currentTime)*60-now.getSeconds();const minsLeft=Math.floor(secsLeft/60);const secLeft=secsLeft%60;timeLeft=`${minsLeft}:${secLeft.toString().padStart(2,'0')} left in this period.`;active=true;if(i+1<todaySchedule.length){const[np,ns]=todaySchedule[i+1];nextPeriodText=`Next Period: ${np} starts at ${formatTime(...ns.split(':').map(Number))}`;}break;}else if(currentTime<startMins){period='Passing Time';const minsUntil=startMins-currentTime;nextPeriodText=`Next Period: ${p} starts in ${minsUntil} min.`;break;}}const lunches=[{grade:5,start:650,end:680},{grade:6,start:682,end:712},{grade:7,start:714,end:744},{grade:8,start:746,end:776}];let lunchMessage='';let currentLunch=null;for(let lunch of lunches){if(currentTime>=lunch.start&&currentTime<lunch.end){lunchMessage=`🍽️ Currently Grade ${lunch.grade} Lunch Period`;currentLunch=lunch.grade;break;}}['lunch5','lunch6','lunch7','lunch8'].forEach(id=>{const el=document.getElementById(id);if(el)el.textContent=el.textContent.replace(' ✅','');});if(currentLunch){const el=document.getElementById(`lunch${currentLunch}`);if(el&&!el.textContent.includes('✅'))el.textContent+=' ✅';}document.getElementById('currentPeriod').textContent=period;document.getElementById('timeRemaining').textContent=timeLeft;document.getElementById('nextPeriod').textContent=nextPeriodText;document.getElementById('lunchStatus').textContent=lunchMessage;document.getElementById('periodBox').classList.toggle('active',active);}
-setInterval(updateClock,1000);updateClock();
-const weatherApiKey="0fc9d7a055b9ac85d9608015b6585d56";
-const weatherUrl=`https://api.openweathermap.org/data/2.5/weather?q=Pepperell,MA,US&units=imperial&appid=${weatherApiKey}`;
-async function fetchWeather(){try{const res=await fetch(weatherUrl);const data=await res.json();const temp=Math.round(data.main.temp);const feelsLike=Math.round(data.main.feels_like);const conditions=data.weather[0].description.replace(/\b\w/g,c=>c.toUpperCase());const windSpeed=Math.round(data.wind.speed);const windDir=getWindDirection(data.wind.deg);document.getElementById('weatherBox').innerHTML=`🌡️ <strong>${temp}°F</strong> (feels like ${feelsLike}°F)<br>${conditions}<br>💨 Wind: ${windDir} at ${windSpeed} mph`; }catch(e){document.getElementById('weatherBox').textContent='⚠️ Weather data unavailable.';}}
-function getWindDirection(deg){const dirs=['N','NE','E','SE','S','SW','W','NW'];return dirs[Math.round(deg/45)%8];}
-fetchWeather();setInterval(fetchWeather,15*60*1000);
-if('serviceWorker' in navigator){navigator.serviceWorker.register('service-worker.js');}
-</script>
-</body></html>
+  <script defer src="app.js"></script>
+</body>
+</html>

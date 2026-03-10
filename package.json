@@ -1,0 +1,16 @@
+{
+  "name": "nms-nextblock",
+  "version": "3.4.0",
+  "private": true,
+  "description": "NextBlock schedule and weather app for Nissitissit Middle School",
+  "main": "server.js",
+  "scripts": {
+    "start": "node server.js"
+  },
+  "engines": {
+    "node": ">=18"
+  },
+  "dependencies": {
+    "express": "^4.21.2"
+  }
+}
