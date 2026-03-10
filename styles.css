@@ -48,6 +48,12 @@ h1 {
   box-shadow: 0 0 25px rgba(0, 51, 102, 0.6);
 }
 
+.period-box.ending-soon {
+  background-color: #8b0000;
+  box-shadow: 0 0 28px rgba(190, 30, 45, 0.75);
+  animation: endingPulse 1s ease-in-out infinite;
+}
+
 #currentPeriod {
   font-size: 1.8em;
   font-weight: bold;
@@ -57,6 +63,12 @@ h1 {
 .time-left {
   font-size: 1.2em;
   color: #007bff;
+}
+
+.time-left.ending-soon {
+  color: #ffe082;
+  font-weight: 800;
+  text-shadow: 0 0 12px rgba(255, 224, 130, 0.75);
 }
 
 .next-period {
@@ -98,4 +110,15 @@ footer {
   margin-top: 30px;
   font-size: 0.9em;
   color: #666;
+}
+
+@keyframes endingPulse {
+  0%,
+  100% {
+    transform: scale(1.03);
+  }
+
+  50% {
+    transform: scale(1.06);
+  }
 }

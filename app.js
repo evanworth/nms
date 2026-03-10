@@ -37,6 +37,8 @@ function updateClock() {
   const now = new Date();
   const currentTime = now.getHours() * 60 + now.getMinutes();
   const day = now.getDay();
+  const periodBox = document.getElementById("periodBox");
+  const timeRemainingEl = document.getElementById("timeRemaining");
 
   document.getElementById("clock").textContent = now.toLocaleTimeString([], {
     hour: "2-digit",
@@ -51,7 +53,8 @@ function updateClock() {
     document.getElementById("timeRemaining").textContent = "";
     document.getElementById("nextPeriod").textContent = "";
     document.getElementById("lunchStatus").textContent = "";
-    document.getElementById("periodBox").classList.remove("active");
+    periodBox.classList.remove("active", "ending-soon");
+    timeRemainingEl.classList.remove("ending-soon");
     return;
   }
 
@@ -66,6 +69,7 @@ function updateClock() {
   let timeLeft = "";
   let nextPeriodText = "";
   let active = false;
+  let endingSoon = false;
 
   for (let i = 0; i < todaySchedule.length; i += 1) {
     const [p, start, end] = todaySchedule[i];
@@ -81,6 +85,7 @@ function updateClock() {
       const secLeft = secsLeft % 60;
       timeLeft = `${minsLeft}:${secLeft.toString().padStart(2, "0")} left in this period.`;
       active = true;
+      endingSoon = secsLeft <= 5 * 60;
 
       if (i + 1 < todaySchedule.length) {
         const [np, ns] = todaySchedule[i + 1];
@@ -123,10 +128,12 @@ function updateClock() {
   }
 
   document.getElementById("currentPeriod").textContent = period;
-  document.getElementById("timeRemaining").textContent = timeLeft;
+  timeRemainingEl.textContent = timeLeft;
   document.getElementById("nextPeriod").textContent = nextPeriodText;
   document.getElementById("lunchStatus").textContent = lunchMessage;
-  document.getElementById("periodBox").classList.toggle("active", active);
+  periodBox.classList.toggle("active", active);
+  periodBox.classList.toggle("ending-soon", active && endingSoon);
+  timeRemainingEl.classList.toggle("ending-soon", active && endingSoon);
 }
 
 function getWindDirection(deg) {
