@@ -14,7 +14,10 @@ h1 {
 }
 
 .logo {
-  margin-top: 10px;
+  display: block;
+  width: min(420px, 92vw);
+  height: auto;
+  margin: 10px auto 6px;
 }
 
 .clock {

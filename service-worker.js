@@ -5,6 +5,7 @@ const PRECACHE_URLS = [
   "./styles.css",
   "./app.js",
   "./manifest.json",
+  "./nms-logo.png",
   "./icon-192.png",
   "./icon-512.png"
 ];
