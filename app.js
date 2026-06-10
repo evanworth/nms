@@ -27,10 +27,54 @@ const lunches = [
   { grade: 8, start: 746, end: 776 }
 ];
 
+const lastSchoolDay = {
+  month: 5,
+  day: 16
+};
+
 function formatTime(hours, minutes) {
   const ampm = hours >= 12 ? "PM" : "AM";
   const hr = hours % 12 || 12;
   return `${hr}:${minutes.toString().padStart(2, "0")} ${ampm}`;
+}
+
+function isWeekday(date) {
+  const day = date.getDay();
+  return day !== 0 && day !== 6;
+}
+
+function countSchoolDaysLeft(today) {
+  const start = new Date(today.getFullYear(), today.getMonth(), today.getDate());
+  const end = new Date(today.getFullYear(), lastSchoolDay.month, lastSchoolDay.day);
+
+  if (start > end) {
+    return 0;
+  }
+
+  let daysLeft = 0;
+  const cursor = new Date(start);
+
+  while (cursor <= end) {
+    if (isWeekday(cursor)) {
+      daysLeft += 1;
+    }
+
+    cursor.setDate(cursor.getDate() + 1);
+  }
+
+  return daysLeft;
+}
+
+function updateSchoolCountdown(now) {
+  const daysLeft = countSchoolDaysLeft(now);
+  const countdownEl = document.getElementById("schoolCountdown");
+
+  if (daysLeft === 0) {
+    countdownEl.textContent = "School year complete";
+    return;
+  }
+
+  countdownEl.textContent = `${daysLeft} school ${daysLeft === 1 ? "day" : "days"} left`;
 }
 
 function updateClock() {
@@ -46,6 +90,8 @@ function updateClock() {
     second: "2-digit",
     hour12: true
   });
+
+  updateSchoolCountdown(now);
 
   if (day === 0 || day === 6) {
     document.getElementById("dayType").textContent = "Weekend Schedule";
