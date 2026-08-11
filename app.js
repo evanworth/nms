@@ -1,30 +1,19 @@
-const schedules = {
-  mw: [
-    ["1", "08:10", "08:40"],
-    ["2", "08:40", "09:30"],
-    ["3", "09:30", "10:20"],
-    ["4", "10:20", "11:10"],
-    ["5", "11:10", "12:00"],
-    ["6", "12:00", "12:50"],
-    ["7", "12:50", "13:40"],
-    ["8", "13:40", "14:25"]
-  ],
-  ttf: [
-    ["1", "08:05", "09:00"],
-    ["2", "09:00", "09:55"],
-    ["3", "09:55", "10:50"],
-    ["4", "10:50", "11:45"],
-    ["5", "11:45", "12:40"],
-    ["6", "12:40", "13:35"],
-    ["7", "13:35", "14:25"]
-  ]
-};
+const schedule = [
+  ["1", "08:05", "08:57"],
+  ["2", "08:57", "09:44"],
+  ["3", "09:44", "10:31"],
+  ["4", "10:31", "11:18"],
+  ["5", "11:18", "12:05"],
+  ["6", "12:05", "12:52"],
+  ["7", "12:52", "13:39"],
+  ["8", "13:39", "14:25"]
+];
 
 const lunches = [
   { grade: 5, start: 650, end: 680 },
-  { grade: 6, start: 682, end: 712 },
+  { grade: 8, start: 682, end: 712 },
   { grade: 7, start: 714, end: 744 },
-  { grade: 8, start: 746, end: 776 }
+  { grade: 6, start: 746, end: 776 }
 ];
 
 const lastSchoolDay = {
@@ -90,6 +79,12 @@ function updateClock() {
     second: "2-digit",
     hour12: true
   });
+  document.getElementById("todayDate").textContent = `Today's Date: ${now.toLocaleDateString([], {
+    weekday: "long",
+    month: "long",
+    day: "numeric",
+    year: "numeric"
+  })}`;
 
   updateSchoolCountdown(now);
 
@@ -104,12 +99,9 @@ function updateClock() {
     return;
   }
 
-  const isMW = day === 1 || day === 3;
-  const todaySchedule = isMW ? schedules.mw : schedules.ttf;
+  const todaySchedule = schedule;
 
-  document.getElementById("dayType").textContent = isMW
-    ? "Monday/Wednesday Schedule"
-    : "Tuesday/Thursday/Friday Schedule";
+  document.getElementById("dayType").textContent = "Daily Schedule";
 
   let period = "No school right now";
   let timeLeft = "";
