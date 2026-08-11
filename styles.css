@@ -7,12 +7,6 @@ body {
   margin: 0;
 }
 
-h1 {
-  color: #003366;
-  margin-top: 10px;
-  font-size: 1.8em;
-}
-
 .logo {
   display: block;
   width: min(420px, 92vw);
@@ -32,9 +26,9 @@ h1 {
 }
 
 .today-date {
-  margin: 0 auto 10px;
+  margin: 10px auto 0;
   color: #003366;
-  font-size: 1.2em;
+  font-size: 1.8em;
   font-weight: 700;
 }
 
