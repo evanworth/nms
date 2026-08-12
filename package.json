@@ -1,8 +1,8 @@
 {
   "name": "nms-nextblock",
-  "version": "3.7.0",
+  "version": "4.0.0",
   "private": true,
-  "description": "NextBlock schedule and weather app for Nissitissit Middle School",
+  "description": "Customizable school schedule, lunch, weather, and branding display",
   "main": "server.js",
   "scripts": {
     "start": "node server.js"
