@@ -1,4 +1,4 @@
-const CACHE_NAME = "nextblock-v9";
+const CACHE_NAME = "nextblock-v10";
 const PRECACHE_URLS = [
   "./",
   "./index.html",

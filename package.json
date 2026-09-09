@@ -1,6 +1,6 @@
 {
   "name": "nms-nextblock",
-  "version": "4.0.0",
+  "version": "4.1.0",
   "private": true,
   "description": "Customizable school schedule, lunch, weather, and branding display",
   "main": "server.js",

@@ -3,18 +3,22 @@ const path = require("path");
 
 const app = express();
 const port = process.env.PORT || 3000;
-const weatherApiKey = process.env.OPENWEATHER_API_KEY;
-
-app.get("/api/weather", async (_req, res) => {
-  if (!weatherApiKey) {
-    res.status(500).json({ error: "Weather service is not configured." });
+app.get("/api/weather", async (req, res) => {
+  const latitude = Number(req.query.latitude ?? 42.6687);
+  const longitude = Number(req.query.longitude ?? -71.5884);
+  if (!Number.isFinite(latitude) || latitude < -90 || latitude > 90 ||
+      !Number.isFinite(longitude) || longitude < -180 || longitude > 180) {
+    res.status(400).json({ error: "Invalid weather location." });
     return;
   }
 
-  const weatherUrl = new URL("https://api.openweathermap.org/data/2.5/weather");
-  weatherUrl.searchParams.set("q", "Pepperell,MA,US");
-  weatherUrl.searchParams.set("units", "imperial");
-  weatherUrl.searchParams.set("appid", weatherApiKey);
+  const weatherUrl = new URL("https://api.open-meteo.com/v1/forecast");
+  weatherUrl.searchParams.set("latitude", latitude);
+  weatherUrl.searchParams.set("longitude", longitude);
+  weatherUrl.searchParams.set("current", "temperature_2m,apparent_temperature,weather_code,wind_speed_10m,wind_direction_10m");
+  weatherUrl.searchParams.set("temperature_unit", "fahrenheit");
+  weatherUrl.searchParams.set("wind_speed_unit", "mph");
+  weatherUrl.searchParams.set("timezone", String(req.query.timezone || "auto"));
 
   try {
     const response = await fetch(weatherUrl);
@@ -23,15 +27,15 @@ app.get("/api/weather", async (_req, res) => {
       return;
     }
 
-    const data = await response.json();
-    const weather = data.weather && data.weather.length > 0 ? data.weather[0] : { description: "Unknown" };
+    const current = (await response.json()).current;
+    if (!current) throw new Error("Weather response is missing current conditions");
 
     res.json({
-      temp: Math.round(data.main.temp),
-      feelsLike: Math.round(data.main.feels_like),
-      conditions: weather.description.replace(/\b\w/g, (c) => c.toUpperCase()),
-      windSpeed: Math.round(data.wind.speed),
-      windDeg: data.wind.deg
+      temperature: current.temperature_2m,
+      apparentTemperature: current.apparent_temperature,
+      weatherCode: current.weather_code,
+      windSpeed: current.wind_speed_10m,
+      windDirection: current.wind_direction_10m
     });
   } catch (_error) {
     res.status(502).json({ error: "Weather service is temporarily unavailable." });

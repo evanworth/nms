@@ -1,4 +1,4 @@
-const APP_VERSION = "4.0";
+const APP_VERSION = "4.1";
 const STORAGE_KEY = "nextblock-school-profile-v1";
 
 const defaultConfig = {
@@ -11,7 +11,15 @@ const defaultConfig = {
   latitude: 42.6687,
   longitude: -71.5884,
   timezone: "America/New_York",
-  lastSchoolDay: "2027-06-16",
+  lastSchoolDay: "2027-06-11",
+  noSchoolDates: [
+    "2026-09-04", "2026-09-07", "2026-10-12", "2026-11-03", "2026-11-11",
+    "2026-11-25", "2026-11-26", "2026-11-27", "2026-12-23", "2026-12-24",
+    "2026-12-25", "2026-12-28", "2026-12-29", "2026-12-30", "2026-12-31",
+    "2027-01-01", "2027-01-18", "2027-02-15", "2027-02-16", "2027-02-17",
+    "2027-02-18", "2027-02-19", "2027-04-19", "2027-04-20", "2027-04-21",
+    "2027-04-22", "2027-04-23", "2027-05-31"
+  ],
   schedule: [
     { label: "1", start: "08:05", end: "08:57" },
     { label: "2", start: "08:57", end: "09:44" },
@@ -39,12 +47,18 @@ function cloneDefaults() {
 function normalizeConfig(value) {
   const fallback = cloneDefaults();
   if (!value || typeof value !== "object") return fallback;
-  return {
+  const normalized = {
     ...fallback,
     ...value,
     schedule: Array.isArray(value.schedule) && value.schedule.length ? value.schedule : fallback.schedule,
-    lunches: Array.isArray(value.lunches) ? value.lunches : fallback.lunches
+    lunches: Array.isArray(value.lunches) ? value.lunches : fallback.lunches,
+    noSchoolDates: Array.isArray(value.noSchoolDates) ? value.noSchoolDates : fallback.noSchoolDates
   };
+  // Migrate the previous built-in calendar while preserving user-entered dates.
+  if (value.lastSchoolDay === "2027-06-16" && !Array.isArray(value.noSchoolDates)) {
+    normalized.lastSchoolDay = fallback.lastSchoolDay;
+  }
+  return normalized;
 }
 
 function loadConfig() {
@@ -83,9 +97,11 @@ function countSchoolDaysLeft(today) {
   if (start > end) return 0;
 
   let daysLeft = 0;
+  const noSchoolDates = new Set(config.noSchoolDates || []);
   const cursor = new Date(start);
   while (cursor <= end) {
-    if (isWeekday(cursor)) daysLeft += 1;
+    const dateKey = `${cursor.getFullYear()}-${String(cursor.getMonth() + 1).padStart(2, "0")}-${String(cursor.getDate()).padStart(2, "0")}`;
+    if (isWeekday(cursor) && !noSchoolDates.has(dateKey)) daysLeft += 1;
     cursor.setDate(cursor.getDate() + 1);
   }
   return daysLeft;
@@ -207,20 +223,18 @@ function getWeatherDescription(code) {
 async function fetchWeather() {
   const weatherBox = document.getElementById("weatherBox");
   weatherBox.textContent = `Loading ${config.locationName} weather...`;
-  const weatherUrl = new URL("https://api.open-meteo.com/v1/forecast");
-  weatherUrl.searchParams.set("latitude", config.latitude);
-  weatherUrl.searchParams.set("longitude", config.longitude);
-  weatherUrl.searchParams.set("current", "temperature_2m,apparent_temperature,weather_code,wind_speed_10m,wind_direction_10m");
-  weatherUrl.searchParams.set("temperature_unit", "fahrenheit");
-  weatherUrl.searchParams.set("wind_speed_unit", "mph");
-  weatherUrl.searchParams.set("timezone", config.timezone || "auto");
   try {
-    const response = await fetch(weatherUrl);
+    const weatherUrl = new URL("/api/weather", window.location.origin);
+    weatherUrl.searchParams.set("latitude", config.latitude);
+    weatherUrl.searchParams.set("longitude", config.longitude);
+    weatherUrl.searchParams.set("timezone", config.timezone || "auto");
+    const response = await fetch(weatherUrl, { cache: "no-store" });
     if (!response.ok) throw new Error("Weather request failed");
-    const current = (await response.json()).current;
-    weatherBox.innerHTML = `<h2>${escapeHtml(config.locationName)} Weather</h2><p class="temperature">${Math.round(current.temperature_2m)}°F</p><p>Feels like ${Math.round(current.apparent_temperature)}°F · ${getWeatherDescription(current.weather_code)}</p><p>Wind ${getWindDirection(current.wind_direction_10m)} at ${Math.round(current.wind_speed_10m)} mph</p>`;
+    const current = await response.json();
+    weatherBox.innerHTML = `<h2>${escapeHtml(config.locationName)} Weather</h2><p class="temperature">${Math.round(current.temperature)}°F</p><p>Feels like ${Math.round(current.apparentTemperature)}°F · ${getWeatherDescription(current.weatherCode)}</p><p>Wind ${getWindDirection(current.windDirection)} at ${Math.round(current.windSpeed)} mph</p>`;
   } catch (_error) {
-    weatherBox.textContent = "Weather data unavailable.";
+    weatherBox.innerHTML = `<h2>Weather</h2><p>Weather data is temporarily unavailable.</p><button class="secondary-button" id="retryWeather" type="button">Try again</button>`;
+    document.getElementById("retryWeather").addEventListener("click", fetchWeather, { once: true });
   }
 }
 
