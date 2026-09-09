@@ -224,13 +224,35 @@ async function fetchWeather() {
   const weatherBox = document.getElementById("weatherBox");
   weatherBox.textContent = `Loading ${config.locationName} weather...`;
   try {
-    const weatherUrl = new URL("/api/weather", window.location.origin);
-    weatherUrl.searchParams.set("latitude", config.latitude);
-    weatherUrl.searchParams.set("longitude", config.longitude);
-    weatherUrl.searchParams.set("timezone", config.timezone || "auto");
-    const response = await fetch(weatherUrl, { cache: "no-store" });
-    if (!response.ok) throw new Error("Weather request failed");
-    const current = await response.json();
+    const proxyUrl = new URL("/api/weather", window.location.origin);
+    proxyUrl.searchParams.set("latitude", config.latitude);
+    proxyUrl.searchParams.set("longitude", config.longitude);
+    proxyUrl.searchParams.set("timezone", config.timezone || "auto");
+
+    let response = await fetch(proxyUrl, { cache: "no-store" });
+    let current;
+    if (response.ok && response.headers.get("content-type")?.includes("application/json")) {
+      current = await response.json();
+    } else {
+      // GitHub Pages is static, so use Open-Meteo directly when no app server exists.
+      const directUrl = new URL("https://api.open-meteo.com/v1/forecast");
+      directUrl.searchParams.set("latitude", config.latitude);
+      directUrl.searchParams.set("longitude", config.longitude);
+      directUrl.searchParams.set("current", "temperature_2m,apparent_temperature,weather_code,wind_speed_10m,wind_direction_10m");
+      directUrl.searchParams.set("temperature_unit", "fahrenheit");
+      directUrl.searchParams.set("wind_speed_unit", "mph");
+      directUrl.searchParams.set("timezone", config.timezone || "auto");
+      response = await fetch(directUrl, { cache: "no-store" });
+      if (!response.ok) throw new Error("Weather request failed");
+      const directCurrent = (await response.json()).current;
+      current = {
+        temperature: directCurrent.temperature_2m,
+        apparentTemperature: directCurrent.apparent_temperature,
+        weatherCode: directCurrent.weather_code,
+        windSpeed: directCurrent.wind_speed_10m,
+        windDirection: directCurrent.wind_direction_10m
+      };
+    }
     weatherBox.innerHTML = `<h2>${escapeHtml(config.locationName)} Weather</h2><p class="temperature">${Math.round(current.temperature)}°F</p><p>Feels like ${Math.round(current.apparentTemperature)}°F · ${getWeatherDescription(current.weatherCode)}</p><p>Wind ${getWindDirection(current.windDirection)} at ${Math.round(current.windSpeed)} mph</p>`;
   } catch (_error) {
     weatherBox.innerHTML = `<h2>Weather</h2><p>Weather data is temporarily unavailable.</p><button class="secondary-button" id="retryWeather" type="button">Try again</button>`;
