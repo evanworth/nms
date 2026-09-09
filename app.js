@@ -1,4 +1,4 @@
-const APP_VERSION = "4.1";
+const APP_VERSION = "4.2";
 const STORAGE_KEY = "nextblock-school-profile-v1";
 
 const defaultConfig = {
@@ -403,7 +403,18 @@ document.getElementById("importSettings").addEventListener("change", async (even
   }
 });
 
-if ("serviceWorker" in navigator) window.addEventListener("load", () => navigator.serviceWorker.register("service-worker.js"));
+if ("serviceWorker" in navigator) {
+  window.addEventListener("load", async () => {
+    const registration = await navigator.serviceWorker.register("service-worker.js");
+    registration.update();
+  });
+  let refreshing = false;
+  navigator.serviceWorker.addEventListener("controllerchange", () => {
+    if (refreshing) return;
+    refreshing = true;
+    window.location.reload();
+  });
+}
 applyConfig();
 setInterval(updateClock, 1000);
 setInterval(fetchWeather, 15 * 60 * 1000);
