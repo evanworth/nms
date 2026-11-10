@@ -1,4 +1,4 @@
-const APP_VERSION = "4.2";
+const APP_VERSION = "4.3";
 const STORAGE_KEY = "nextblock-school-profile-v1";
 
 const defaultConfig = {
@@ -220,43 +220,44 @@ function getWeatherDescription(code) {
   return codes[code] || "Current Conditions";
 }
 
+const WEATHER_TIMEOUT_MS = 10000;
+const WEATHER_MAX_AGE_MS = 60 * 60 * 1000;
+let lastWeather = null;
+
 async function fetchWeather() {
   const weatherBox = document.getElementById("weatherBox");
-  weatherBox.textContent = `Loading ${config.locationName} weather...`;
-  try {
-    const proxyUrl = new URL("/api/weather", window.location.origin);
-    proxyUrl.searchParams.set("latitude", config.latitude);
-    proxyUrl.searchParams.set("longitude", config.longitude);
-    proxyUrl.searchParams.set("timezone", config.timezone || "auto");
+  const locationKey = `${config.locationName}|${config.latitude}|${config.longitude}`;
+  const hasRecentReading = () => lastWeather !== null
+    && lastWeather.locationKey === locationKey
+    && Date.now() - lastWeather.at < WEATHER_MAX_AGE_MS;
 
-    let response = await fetch(proxyUrl, { cache: "no-store" });
-    let current;
-    if (response.ok && response.headers.get("content-type")?.includes("application/json")) {
-      current = await response.json();
-    } else {
-      // GitHub Pages is static, so use Open-Meteo directly when no app server exists.
-      const directUrl = new URL("https://api.open-meteo.com/v1/forecast");
-      directUrl.searchParams.set("latitude", config.latitude);
-      directUrl.searchParams.set("longitude", config.longitude);
-      directUrl.searchParams.set("current", "temperature_2m,apparent_temperature,weather_code,wind_speed_10m,wind_direction_10m");
-      directUrl.searchParams.set("temperature_unit", "fahrenheit");
-      directUrl.searchParams.set("wind_speed_unit", "mph");
-      directUrl.searchParams.set("timezone", config.timezone || "auto");
-      response = await fetch(directUrl, { cache: "no-store" });
-      if (!response.ok) throw new Error("Weather request failed");
-      const directCurrent = (await response.json()).current;
-      current = {
-        temperature: directCurrent.temperature_2m,
-        apparentTemperature: directCurrent.apparent_temperature,
-        weatherCode: directCurrent.weather_code,
-        windSpeed: directCurrent.wind_speed_10m,
-        windDirection: directCurrent.wind_direction_10m
-      };
-    }
-    weatherBox.innerHTML = `<h2>${escapeHtml(config.locationName)} Weather</h2><p class="temperature">${Math.round(current.temperature)}°F</p><p>Feels like ${Math.round(current.apparentTemperature)}°F · ${getWeatherDescription(current.weatherCode)}</p><p>Wind ${getWindDirection(current.windDirection)} at ${Math.round(current.windSpeed)} mph</p>`;
+  if (!hasRecentReading()) weatherBox.textContent = `Loading ${config.locationName} weather...`;
+
+  const controller = new AbortController();
+  const timeout = setTimeout(() => controller.abort(), WEATHER_TIMEOUT_MS);
+  try {
+    const url = new URL("https://api.open-meteo.com/v1/forecast");
+    url.searchParams.set("latitude", config.latitude);
+    url.searchParams.set("longitude", config.longitude);
+    url.searchParams.set("current", "temperature_2m,apparent_temperature,weather_code,wind_speed_10m,wind_direction_10m");
+    url.searchParams.set("temperature_unit", "fahrenheit");
+    url.searchParams.set("wind_speed_unit", "mph");
+    url.searchParams.set("timezone", config.timezone || "auto");
+
+    const response = await fetch(url, { cache: "no-store", signal: controller.signal });
+    if (!response.ok) throw new Error("Weather request failed");
+    const current = (await response.json()).current;
+    if (!current) throw new Error("Weather response is missing current conditions");
+
+    weatherBox.innerHTML = `<h2>${escapeHtml(config.locationName)} Weather</h2><p class="temperature">${Math.round(current.temperature_2m)}°F</p><p>Feels like ${Math.round(current.apparent_temperature)}°F · ${getWeatherDescription(current.weather_code)}</p><p>Wind ${getWindDirection(current.wind_direction_10m)} at ${Math.round(current.wind_speed_10m)} mph</p>`;
+    lastWeather = { locationKey, at: Date.now() };
   } catch (_error) {
+    // A failed refresh keeps the previous reading on screen until it is an hour old.
+    if (hasRecentReading()) return;
     weatherBox.innerHTML = `<h2>Weather</h2><p>Weather data is temporarily unavailable.</p><button class="secondary-button" id="retryWeather" type="button">Try again</button>`;
     document.getElementById("retryWeather").addEventListener("click", fetchWeather, { once: true });
+  } finally {
+    clearTimeout(timeout);
   }
 }
 
